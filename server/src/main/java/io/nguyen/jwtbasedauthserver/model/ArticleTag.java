@@ -1,0 +1,60 @@
+package io.nguyen.jwtbasedauthserver.model;
+
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.LocalDateTime;
+import java.util.Objects;
+
+@Getter
+@Entity
+@Table(name = "article_tag", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"article_id", "tag_name"})
+})
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SuppressWarnings("JpaDataSourceORMInspection")
+public class ArticleTag {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Setter
+    @ManyToOne
+    private Article article;
+
+    @ManyToOne
+    @JoinColumn(name = "tag_name", nullable = false)
+    private Tag tag;
+
+    @Column(nullable = false, updatable = false)
+    private final LocalDateTime createdAt = LocalDateTime.now();
+
+    public ArticleTag(Article article, Tag tag) {
+        if (article == null || article.getId() == null) {
+            throw new IllegalArgumentException("article is null or unknown article");
+        }
+        if (tag == null || tag.getName() == null) {
+            throw new IllegalArgumentException("tag is null or unknown tag");
+        }
+
+        this.article = article;
+        this.tag = tag;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof ArticleTag other
+                && Objects.equals(this.getId(), other.getId())
+                && Objects.equals(this.getArticle(), other.getArticle())
+                && Objects.equals(this.getTag(), other.getTag());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.getId(), this.getArticle(), this.getTag());
+    }
+
+}
