@@ -1,0 +1,15 @@
+spring:
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: create-drop
+
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: true
+
+security:
+  key:
+    private: classpath:app.key
+    public: classpath:app.pub
