@@ -1,30 +1,37 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { TOKEN_KEY, useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router";
 import { signup } from "../api/auth";
 import { ApiError } from "../types/error";
 import { ErrorMessage } from "./ErrorMessage";
+import { useForm } from "react-hook-form";
+import { SignupFormData, signupSchema } from "../schemas/auth.schema";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { FormField } from "./FormField";
 
 export const SignupForm = () => {
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignupFormData>({
+    resolver: yupResolver(signupSchema),
+    mode: "onBlur",
+  });
+
   const [error, setError] = useState<string | ApiError>("");
-  const [isLoading, setIsLoading] = useState(false);
   const { setUser } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const onSubmit = async (data: SignupFormData) => {
     setError("");
 
     try {
       const response = await signup({
         user: {
-          email,
-          username,
-          password,
+          email: data.email,
+          username: data.username,
+          password: data.password,
         },
       });
       localStorage.setItem(TOKEN_KEY, response.user.token);
@@ -36,8 +43,6 @@ export const SignupForm = () => {
       } else {
         setError("Registration failed. Please try again.");
       }
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -49,53 +54,36 @@ export const SignupForm = () => {
 
       {error && <ErrorMessage error={error} />}
 
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block mb-2 text-sm font-medium text-gray-700">
-            Username
-          </label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        <FormField
+          label="Username"
+          inputName="username"
+          error={errors.username}
+          {...register("username")}
+        />
 
-        <div className="mb-4">
-          <label className="block mb-2 text-sm font-medium text-gray-700">
-            Email
-          </label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
+        <FormField
+          label="Email"
+          type="email"
+          inputName="email"
+          error={errors.email}
+          {...register("email")}
+        />
 
-        <div className="mb-6">
-          <label className="block mb-2 text-sm font-medium text-gray-700">
-            Password
-          </label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-            minLength={6}
-          />
-        </div>
+        <FormField
+          label="Password"
+          type="password"
+          inputName="password"
+          error={errors.password}
+          {...register("password")}
+        />
 
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={isSubmitting}
           className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-75"
         >
-          {isLoading ? "Loading..." : "Register"}
+          {isSubmitting ? "Loading..." : "Register"}
         </button>
       </form>
 
