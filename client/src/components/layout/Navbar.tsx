@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { TOKEN_KEY, useAuth } from "../contexts/AuthContext";
+import { TOKEN_KEY, useAuth } from "../../contexts/AuthContext";
 
 export const Navbar = () => {
   const { user } = useAuth();

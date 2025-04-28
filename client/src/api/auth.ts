@@ -1,7 +1,7 @@
 import { ApiError } from "../types/error";
 import { LoginRequest, SignupRequest, UsersResponse } from "../types/user";
 
-const API_URL = "http://localhost:8080/api";
+const API_URL = import.meta.env.VITE_API_URL;
 
 export const login = async (
   credentials: LoginRequest

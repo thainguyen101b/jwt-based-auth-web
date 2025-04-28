@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router";
 import { AuthProvider } from "./contexts/AuthContext";
-import { Navbar } from "./components/Navbar";
+import { Navbar } from "./components/layout/Navbar";
 import { HomePage } from "./pages/HomePage";
 import { LoginForm } from "./components/LoginForm";
 import { SignupForm } from "./components/SignupForm";
