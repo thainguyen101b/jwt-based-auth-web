@@ -1,66 +1,24 @@
-import { ApiError } from "../types/error";
 import { LoginRequest, SignupRequest, UsersResponse } from "../types/user";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import apiClient from "./axiosConfig";
 
 export const login = async (
   credentials: LoginRequest
 ): Promise<UsersResponse> => {
-  const response = await fetch(`${API_URL}/users/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(credentials),
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    // RFC 7807
-    const errorData = data as ApiError;
-    throw errorData;
-  }
-
-  return data;
+  const response = await apiClient.post<UsersResponse>(
+    "/users/login",
+    credentials
+  );
+  return response.data;
 };
 
 export const signup = async (
   userData: SignupRequest
 ): Promise<UsersResponse> => {
-  const response = await fetch(`${API_URL}/users`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(userData),
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    const errorData = data as ApiError;
-    throw errorData
-  }
-
-  return data;
+  const response = await apiClient.post<UsersResponse>("/users", userData);
+  return response.data;
 };
 
-export const getUser = async (token: string): Promise<UsersResponse> => {
-  const response = await fetch(`${API_URL}/user`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    const errorData = data as ApiError;
-    throw errorData;
-  }
-
-  return data;
+export const getUser = async (): Promise<UsersResponse> => {
+  const response = await apiClient.get<UsersResponse>("/user");
+  return response.data;
 };
