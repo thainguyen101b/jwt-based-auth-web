@@ -76,14 +76,15 @@ class ArticleServiceTest {
         Article article = new Article(testUser1, "title", "desc", "content");
         ArticleDetails expectedDetails = ArticleDetails.unauthenticated(article, 0);
         List<ArticleDetails> expectedDetailsList = List.of(expectedDetails);
-        when(articleRepository.findAll(facets)).thenReturn(List.of(article));
+        Page<Article> articlePage = new Page<>(List.of(article), 0, 20, 1, 1);
+        when(articleRepository.findAll(facets)).thenReturn(articlePage);
         when(articleRepository.findArticleDetails(article)).thenReturn(expectedDetails);
 
         // when
-        List<ArticleDetails> actualArticleDetailsList = sut.getArticles(facets);
+        Page<ArticleDetails> actualArticleDetailsPage = sut.getArticles(facets);
 
         // then
-        assertEquals(expectedDetailsList, actualArticleDetailsList);
+        assertEquals(expectedDetailsList, actualArticleDetailsPage.content());
     }
 
     @Test
@@ -94,14 +95,15 @@ class ArticleServiceTest {
         Article article = new Article(testUser1, "title", "desc", "content");
         ArticleDetails expectedDetails = ArticleDetails.unauthenticated(article, 0);
         List<ArticleDetails> expectedDetailsList = List.of(expectedDetails);
-        when(articleRepository.findAll(facets)).thenReturn(List.of(article));
+        Page<Article> articlePage = new Page<>(List.of(article), 0, 20, 1, 1);
+        when(articleRepository.findAll(facets)).thenReturn(articlePage);
         when(articleRepository.findArticleDetails(requester, article)).thenReturn(expectedDetails);
 
         // when
-        List<ArticleDetails> actualArticleDetailsList = sut.getArticles(requester, facets);
+        Page<ArticleDetails> actualArticleDetailsPage = sut.getArticles(requester, facets);
 
         // then
-        assertEquals(expectedDetailsList, actualArticleDetailsList);
+        assertEquals(expectedDetailsList, actualArticleDetailsPage.content());
     }
 
     @Test
@@ -111,14 +113,15 @@ class ArticleServiceTest {
         Article article = new Article(testUser1, "title", "bef", "content");
         ArticleDetails articleDetails = ArticleDetails.unauthenticated(article, 0);
         List<ArticleDetails> expectedArticleDetailsList = List.of(articleDetails);
-        when(articleRepository.findAll(facets)).thenReturn(List.of(article));
+        Page<Article> articlePage = new Page<>(List.of(article), 0, 20, 1, 1);
+        when(articleRepository.findAll(facets)).thenReturn(articlePage);
         when(articleRepository.findArticleDetails(article)).thenReturn(articleDetails);
 
         // when
-        List<ArticleDetails> actualArticleDetailsList = sut.getArticles(facets);
+        Page<ArticleDetails> actualArticleDetailsPage = sut.getArticles(facets);
 
         // then
-        assertEquals(expectedArticleDetailsList, actualArticleDetailsList);
+        assertEquals(expectedArticleDetailsList, actualArticleDetailsPage.content());
         verify(articleRepository).findAll(facets);
         verify(articleRepository).findArticleDetails(article);
     }
@@ -127,13 +130,14 @@ class ArticleServiceTest {
     void getArticles_ReturnsEmptyList_whenNoArticlesFound() {
         // given
         ArticleFacets facets = new ArticleFacets(1, 10);
-        when(articleRepository.findAll(facets)).thenReturn(List.of());
+        Page<Article> articlePage = new Page<>(List.of(), 0, 20, 0, 1);
+        when(articleRepository.findAll(facets)).thenReturn(articlePage);
 
         // when
-        List<ArticleDetails> actualArticleDetailsList = sut.getArticles(facets);
+        Page<ArticleDetails> actualArticleDetailsPage = sut.getArticles(facets);
 
         // then
-        assertEquals(List.of(), actualArticleDetailsList);
+        assertEquals(List.of(), actualArticleDetailsPage.content());
         verify(articleRepository).findAll(facets);
     }
 
@@ -144,14 +148,15 @@ class ArticleServiceTest {
         ArticleDetails expectedDetails = ArticleDetails.unauthenticated(article, 0);
         List<ArticleDetails> expectedDetailsList = List.of(expectedDetails);
         when(userFollowRepository.findByFollower(testUser2)).thenReturn(List.of(new UserFollow(testUser2, testUser1)));
-        when(articleRepository.findByAuthors(List.of(testUser1), facets)).thenReturn(List.of(article));
+        Page<Article> articlePage = new Page<>(List.of(article), 0, 20, 1, 1);
+        when(articleRepository.findByAuthors(List.of(testUser1), facets)).thenReturn(articlePage);
         when(articleRepository.findArticleDetails(testUser2, article)).thenReturn(expectedDetails);
 
         // when
-        List<ArticleDetails> actualArticleDetailsList = sut.getFeeds(testUser2, facets);
+        Page<ArticleDetails> actualArticleDetailsPage = sut.getFeeds(testUser2, facets);
 
         // then
-        assertEquals(expectedDetailsList, actualArticleDetailsList);
+        assertEquals(expectedDetailsList, actualArticleDetailsPage.content());
     }
 
     @Test
@@ -160,13 +165,14 @@ class ArticleServiceTest {
         User user = new User("email", "username", "password");
         ArticleFacets facets = new ArticleFacets(1, 10);
         when(userFollowRepository.findByFollower(user)).thenReturn(List.of());
-        when(articleRepository.findByAuthors(List.of(), facets)).thenReturn(List.of());
+        Page<Article> articlePage = new Page<>(List.of(), 0, 20, 0, 1);
+        when(articleRepository.findByAuthors(List.of(), facets)).thenReturn(articlePage);
 
         // when
-        List<ArticleDetails> actualArticleDetailsList = sut.getFeeds(user, facets);
+        Page<ArticleDetails> actualArticleDetailsPage = sut.getFeeds(user, facets);
 
         // then
-        assertEquals(List.of(), actualArticleDetailsList);
+        assertEquals(List.of(), actualArticleDetailsPage.content());
     }
 
     @Test

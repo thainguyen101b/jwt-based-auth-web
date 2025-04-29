@@ -1,7 +1,6 @@
 package io.nguyen.jwtbasedauthserver.model;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 
 public interface ArticleRepository {
@@ -9,11 +8,11 @@ public interface ArticleRepository {
 
     Article save(Article article, Collection<Tag> tags);
 
-    List<Article> findAll(ArticleFacets facets);
+    Page<Article> findAll(ArticleFacets facets);
 
     Optional<Article> findBySlug(String slug);
 
-    List<Article> findByAuthors(Collection<User> authors, ArticleFacets facets);
+    Page<Article> findByAuthors(Collection<User> authors, ArticleFacets facets);
 
     ArticleDetails findArticleDetails(Article article);
 

@@ -29,10 +29,9 @@ public class ArticleService {
      * @param facets article facets
      * @return Returns articles with information
      */
-    public List<ArticleDetails> getArticles(ArticleFacets facets) {
-        return articleRepository.findAll(facets).stream()
-                .map(articleRepository::findArticleDetails)
-                .toList();
+    public Page<ArticleDetails> getArticles(ArticleFacets facets) {
+        return articleRepository.findAll(facets)
+                .map(articleRepository::findArticleDetails);
     }
 
     /**
@@ -42,10 +41,9 @@ public class ArticleService {
      * @param facets article facets
      * @return Returns articles with information
      */
-    public List<ArticleDetails> getArticles(User requester, ArticleFacets facets) {
-        return articleRepository.findAll(facets).stream()
-                .map(article -> articleRepository.findArticleDetails(requester, article))
-                .toList();
+    public Page<ArticleDetails> getArticles(User requester, ArticleFacets facets) {
+        return articleRepository.findAll(facets)
+                .map(article -> articleRepository.findArticleDetails(requester, article));
     }
 
     /**
@@ -55,14 +53,13 @@ public class ArticleService {
      * @param facets article facets
      * @return Returns articles with information
      */
-    public List<ArticleDetails> getFeeds(User user, ArticleFacets facets) {
+    public Page<ArticleDetails> getFeeds(User user, ArticleFacets facets) {
         var followings = userFollowRepository.findByFollower(user).stream()
                 .map(UserFollow::getFollowing)
                 .toList();
 
-        return articleRepository.findByAuthors(followings, facets).stream()
-                .map(article -> articleRepository.findArticleDetails(user, article))
-                .toList();
+        return articleRepository.findByAuthors(followings, facets)
+                .map(article -> articleRepository.findArticleDetails(user, article));
     }
 
     /**

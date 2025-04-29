@@ -7,7 +7,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -33,13 +32,19 @@ class ArticleRepositoryAdapter implements ArticleRepository {
     }
 
     @Override
-    public List<Article> findAll(ArticleFacets facets) {
+    public Page<Article> findAll(ArticleFacets facets) {
         var pageable = PageRequest.of(facets.page(), facets.size());
         var spec = Specification.where(ArticleSpecifications.hasAuthorName(facets.author()))
                 .or(ArticleSpecifications.hasTagName(facets.tag()))
                 .or(ArticleSpecifications.hasFavoritedUsername(facets.favorited()));
 
-        return articleJpaRepository.findAll(spec, pageable).getContent();
+        org.springframework.data.domain.Page<Article> articlePage = articleJpaRepository.findAll(spec, pageable);
+        return new Page<>(
+                articlePage.getContent(),
+                articlePage.getNumber(),
+                articlePage.getSize(),
+                articlePage.getTotalElements(),
+                articlePage.getTotalPages());
     }
 
     @Override
@@ -48,8 +53,15 @@ class ArticleRepositoryAdapter implements ArticleRepository {
     }
 
     @Override
-    public List<Article> findByAuthors(Collection<User> authors, ArticleFacets facets) {
-        return articleJpaRepository.findByAuthorIn(authors, PageRequest.of(facets.page(), facets.size()));
+    public Page<Article> findByAuthors(Collection<User> authors, ArticleFacets facets) {
+        org.springframework.data.domain.Page<Article> articlePage =
+                articleJpaRepository.findByAuthorIn(authors, PageRequest.of(facets.page(), facets.size()));
+        return new Page<>(
+                articlePage.getContent(),
+                articlePage.getNumber(),
+                articlePage.getSize(),
+                articlePage.getTotalElements(),
+                articlePage.getTotalPages());
     }
 
     @Override
