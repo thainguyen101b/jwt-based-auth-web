@@ -82,14 +82,15 @@ export const ArticlesPage = () => {
     try {
       await deleteArticle(articleToDelete.slug);
       fetchArticles(); // Refresh the list
-      setShowDeleteModal(false);
-      setArticleToDelete(null);
     } catch (err) {
       if (err && typeof err === "object" && "status" in err) {
         setError(err as ApiError);
       } else {
         setError("Delete article error. Please try again.");
       }
+    } finally {
+      setShowDeleteModal(false);
+      setArticleToDelete(null);
     }
   };
 
