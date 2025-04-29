@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArticleResponse, MultipleArticlesResponse } from "../../types/article";
-import { useNavigate } from "react-router";
 import { ApiError } from "../../types/error";
 import {
   ColumnFiltersState,
@@ -15,19 +14,16 @@ import {
 } from "@tanstack/react-table";
 import { deleteArticle, getArticles } from "../../api/article";
 import { Button } from "../../components/common/Button";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  EditIcon,
-  EyeIcon,
-  PlusIcon,
-  SearchIcon,
-  TrashIcon,
-} from "lucide-react";
+import { EditIcon, EyeIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { ErrorMessage } from "../../components/ErrorMessage";
+import { SearchBar } from "../../components/common/SearchBar";
+import { PageSizeSelector } from "../../components/common/PageSizeSelector";
+import { LoadingRow } from "../../components/common/LoadingRow";
+import { EmptyState } from "../../components/common/EmptyState";
+import { Pagination } from "../../components/common/Pagination";
+import { DeleteModal } from "../../components/common/DeleteModal";
 
 export const ArticlesPage = () => {
-  const navigate = useNavigate();
   const [articles, setArticles] = useState<ArticleResponse[]>([]);
   const [totalArticles, setTotalArticles] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -47,7 +43,7 @@ export const ArticlesPage = () => {
   const [articleToDelete, setArticleToDelete] =
     useState<ArticleResponse | null>(null);
 
-  const fetchArticles = async () => {
+  const fetchArticles = useCallback(async () => {
     try {
       setIsLoading(true);
       setError("");
@@ -72,12 +68,12 @@ export const ArticlesPage = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [pageIndex, pageSize]);
 
   // Initial fetch and when pagination change
   useEffect(() => {
     fetchArticles();
-  }, [pageIndex, pageSize]);
+  }, [fetchArticles]);
 
   // Handle delete article
   const handleDeleteArticle = async () => {
@@ -96,6 +92,21 @@ export const ArticlesPage = () => {
       }
     }
   };
+
+  const handlePageSizeChange = useCallback((size: number) => {
+    setPageSize(size);
+    setPageIndex(0);
+  }, []);
+
+  const openDeleteModal = useCallback((article: ArticleResponse) => {
+    setArticleToDelete(article);
+    setShowDeleteModal(true);
+  }, []);
+
+  const closeDeleteModal = useCallback(() => {
+    setShowDeleteModal(false);
+    setArticleToDelete(null);
+  }, []);
 
   // Column definitions
   const columnHelper = createColumnHelper<ArticleResponse>();
@@ -131,22 +142,25 @@ export const ArticlesPage = () => {
       }),
       columnHelper.accessor("tagList", {
         header: "Tags",
-        cell: (info) => (
-          <div className="flex flex-wrap gap-1 max-w-xs">
-            {info.getValue().length > 0 ? (
-              info.getValue().map((tag, index) => (
-                <span
-                  key={index}
-                  className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
-                >
-                  {tag}
-                </span>
-              ))
-            ) : (
-              <span className="text-gray-400 text-sm">Empty</span>
-            )}
-          </div>
-        ),
+        cell: (info) => {
+          const tags = info.getValue();
+          return (
+            <div className="flex flex-wrap gap-1 max-w-xs">
+              {tags.length > 0 ? (
+                tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+                  >
+                    {tag}
+                  </span>
+                ))
+              ) : (
+                <span className="text-gray-400 text-sm">Empty</span>
+              )}
+            </div>
+          );
+        },
       }),
       columnHelper.accessor("createdAt", {
         header: "Created At",
@@ -173,10 +187,7 @@ export const ArticlesPage = () => {
             </Button>
             <Button
               variant="danger"
-              onClick={() => {
-                setArticleToDelete(info.row.original);
-                setShowDeleteModal(true);
-              }}
+              onClick={() => openDeleteModal(info.row.original)}
             >
               <TrashIcon size={18} />
             </Button>
@@ -184,8 +195,10 @@ export const ArticlesPage = () => {
         ),
       }),
     ],
-    [navigate]
+    [openDeleteModal]
   );
+
+  const pageCount = Math.ceil(totalArticles / pageSize);
 
   // Table instance
   const table = useReactTable({
@@ -201,7 +214,7 @@ export const ArticlesPage = () => {
       },
     },
     manualPagination: true,
-    pageCount: Math.ceil(totalArticles / pageSize),
+    pageCount,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
@@ -210,8 +223,6 @@ export const ArticlesPage = () => {
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
-
-  const pageCount = Math.ceil(totalArticles / pageSize);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -231,33 +242,8 @@ export const ArticlesPage = () => {
 
       {/* Search and filter */}
       <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="relative w-full sm:w-64">
-          <input
-            placeholder="Search article"
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            type="text"
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-          />
-          <SearchIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-        </div>
-
-        <div className="flex items-center">
-          <select
-            value={pageSize}
-            onChange={(e) => {
-              setPageSize(Number(e.target.value));
-              setPageIndex(0);
-            }}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {[10, 20, 30, 50].map((size) => (
-              <option key={size} value={size}>
-                {size} rows
-              </option>
-            ))}
-          </select>
-        </div>
+        <SearchBar value={globalFilter} onChange={setGlobalFilter} />
+        <PageSizeSelector value={pageSize} onChange={handlePageSizeChange} />
       </div>
 
       {/* Error */}
@@ -293,48 +279,9 @@ export const ArticlesPage = () => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {isLoading ? (
-              Array.from({ length: pageSize }).map((_, index) => (
-                <tr key={index} className="animate-pulse">
-                  <td className="px-4 py-4">
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="flex items-center">
-                      <div className="h-8 w-8 bg-gray-200 rounded-full mr-2"></div>
-                      <div className="h-4 bg-gray-200 rounded w-20"></div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="flex gap-1">
-                      <div className="h-6 bg-gray-200 rounded-full w-16"></div>
-                      <div className="h-6 bg-gray-200 rounded-full w-16"></div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="h-4 bg-gray-200 rounded w-20"></div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="h-4 bg-gray-200 rounded w-20"></div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="h-4 bg-gray-200 rounded w-8"></div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="flex space-x-2">
-                      <div className="h-6 w-6 bg-gray-200 rounded"></div>
-                      <div className="h-6 w-6 bg-gray-200 rounded"></div>
-                      <div className="h-6 w-6 bg-gray-200 rounded"></div>
-                    </div>
-                  </td>
-                </tr>
-              ))
+              <LoadingRow />
             ) : articles.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
-                  Không có bài viết nào. Hãy tạo bài viết mới!
-                </td>
-              </tr>
+              <EmptyState stateName="articles" />
             ) : (
               table.getRowModel().rows.map((row) => (
                 <tr key={row.id} className="hover:bg-gray-50">
@@ -354,99 +301,20 @@ export const ArticlesPage = () => {
       </div>
 
       {/* Pagination */}
-      <div className="mt-4 flex flex-col sm:flex-row justify-between items-center">
-        <div className="text-sm text-gray-700 mb-2 sm:mb-0">
-          from {pageIndex * pageSize + 1} to{" "}
-          {Math.min((pageIndex + 1) * pageSize, totalArticles)}
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setPageIndex((p) => Math.max(0, p - 1))}
-            disabled={pageIndex === 0}
-            className={`p-2 rounded-full flex items-center justify-center ${
-              pageIndex === 0
-                ? "text-gray-400 cursor-not-allowed"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            <ChevronLeftIcon className="h-5 w-5" />
-          </button>
-
-          <div className="flex space-x-1">
-            {Array.from({ length: Math.min(5, pageCount) }).map((_, i) => {
-              let pageNum;
-              if (pageCount <= 5) {
-                // If 5 or fewer pages, show all
-                pageNum = i;
-              } else if (pageIndex < 2) {
-                // First 2 pages
-                pageNum = i;
-              } else if (pageIndex > pageCount - 3) {
-                // Last 2 pages
-                pageNum = pageCount - 5 + i;
-              } else {
-                // Middle pages
-                pageNum = pageIndex - 2 + i;
-              }
-
-              return (
-                <button
-                  key={pageNum}
-                  onClick={() => setPageIndex(pageNum)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-full ${
-                    pageIndex === pageNum
-                      ? "bg-blue-600 text-white"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  {pageNum + 1}
-                </button>
-              );
-            })}
-          </div>
-
-          <button
-            onClick={() => setPageIndex((p) => Math.min(pageCount - 1, p + 1))}
-            disabled={pageIndex === pageCount - 1}
-            className={`p-2 rounded-full flex items-center justify-center ${
-              pageIndex === pageCount - 1
-                ? "text-gray-400 cursor-not-allowed"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            <ChevronRightIcon className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
+      <Pagination
+        pageIndex={pageIndex}
+        pageSize={pageSize}
+        pageCount={pageCount}
+        totalItems={totalArticles}
+        setPageIndex={setPageIndex}
+      />
 
       {/* Delete confirmation modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Delete confirm
-            </h3>
-            <p className="text-gray-500 mb-6">
-              Are you sure delete article "{articleToDelete?.title}"? This
-              action can't be revert.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setArticleToDelete(null);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button variant="danger" onClick={handleDeleteArticle}>
-                Delete
-              </Button>
-            </div>
-          </div>
-        </div>
+        <DeleteModal
+          onCancel={closeDeleteModal}
+          onConfirm={handleDeleteArticle}
+        />
       )}
     </div>
   );
