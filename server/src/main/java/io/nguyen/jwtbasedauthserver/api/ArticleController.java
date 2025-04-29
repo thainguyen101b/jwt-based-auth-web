@@ -10,15 +10,12 @@ import io.nguyen.jwtbasedauthserver.mixin.AuthenticationAwareMixin;
 import io.nguyen.jwtbasedauthserver.model.Article;
 import io.nguyen.jwtbasedauthserver.model.ArticleDetails;
 import io.nguyen.jwtbasedauthserver.model.ArticleFacets;
+import io.nguyen.jwtbasedauthserver.model.Page;
 import io.nguyen.jwtbasedauthserver.service.ArticleService;
 import io.nguyen.jwtbasedauthserver.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
-import static java.util.stream.Collectors.collectingAndThen;
-import static java.util.stream.Collectors.toList;
 
 @RestController
 @RequiredArgsConstructor
@@ -113,10 +110,9 @@ class ArticleController implements AuthenticationAwareMixin {
         return this.getArticlesResponse(articleDetails);
     }
 
-    private MultipleArticlesResponse getArticlesResponse(List<ArticleDetails> articles) {
-        return articles.stream()
-                .map(ArticleResponse::new)
-                .collect(collectingAndThen(toList(), MultipleArticlesResponse::new));
+    private MultipleArticlesResponse getArticlesResponse(Page<ArticleDetails> articlesPage) {
+        Page<ArticleResponse> articleResponsePage = articlesPage.map(ArticleResponse::new);
+        return new MultipleArticlesResponse(articleResponsePage);
     }
 
 }
