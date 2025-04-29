@@ -25,7 +25,6 @@ import { DeleteModal } from "../../components/common/DeleteModal";
 
 export const ArticlesPage = () => {
   const [articles, setArticles] = useState<ArticleResponse[]>([]);
-  const [totalArticles, setTotalArticles] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | ApiError>("");
 
@@ -35,8 +34,10 @@ export const ArticlesPage = () => {
   const [globalFilter, setGlobalFilter] = useState<string>("");
 
   // Pagination state
-  const [pageIndex, setPageIndex] = useState<number>(0);
-  const [pageSize, setPageSize] = useState<number>(20);
+  const [pageNumber, setPageNumber] = useState<number>(0);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [totalElements, setTotalElements] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(0);
 
   // Delete Modal state
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
@@ -48,17 +49,24 @@ export const ArticlesPage = () => {
       setIsLoading(true);
       setError("");
 
-      const offset = pageIndex * pageSize;
-      const limit = pageSize;
       const data: MultipleArticlesResponse = await getArticles(
         undefined,
         undefined,
         undefined,
-        offset,
-        limit
+        pageNumber,
+        pageSize
       );
       setArticles(data.articles);
-      setTotalArticles(data.articlesCount);
+      setTotalElements(data.totalElements);
+      setTotalPages(data.totalPages);
+
+      // Sync
+      if (data.pageNumber !== pageNumber) {
+        setPageNumber(data.pageNumber);
+      }
+      if (data.pageSize !== pageSize) {
+        setPageSize(data.pageSize);
+      }
     } catch (err) {
       if (err && typeof err === "object" && "status" in err) {
         setError(err as ApiError);
@@ -68,7 +76,7 @@ export const ArticlesPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [pageIndex, pageSize]);
+  }, [pageNumber, pageSize]);
 
   // Initial fetch and when pagination change
   useEffect(() => {
@@ -96,7 +104,7 @@ export const ArticlesPage = () => {
 
   const handlePageSizeChange = useCallback((size: number) => {
     setPageSize(size);
-    setPageIndex(0);
+    setPageNumber(0);
   }, []);
 
   const openDeleteModal = useCallback((article: ArticleResponse) => {
@@ -199,8 +207,6 @@ export const ArticlesPage = () => {
     [openDeleteModal]
   );
 
-  const pageCount = Math.ceil(totalArticles / pageSize);
-
   // Table instance
   const table = useReactTable({
     data: articles,
@@ -210,12 +216,12 @@ export const ArticlesPage = () => {
       columnFilters,
       globalFilter,
       pagination: {
-        pageIndex,
+        pageIndex: pageNumber,
         pageSize,
       },
     },
     manualPagination: true,
-    pageCount,
+    pageCount: totalPages,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
@@ -303,11 +309,12 @@ export const ArticlesPage = () => {
 
       {/* Pagination */}
       <Pagination
-        pageIndex={pageIndex}
+        pageNumber={pageNumber}
         pageSize={pageSize}
-        pageCount={pageCount}
-        totalItems={totalArticles}
-        setPageIndex={setPageIndex}
+        totalElements={totalElements}
+        totalPages={totalPages}
+        setPageNumber={setPageNumber}
+        onPageSizeChange={handlePageSizeChange}
       />
 
       {/* Delete confirmation modal */}

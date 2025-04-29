@@ -33,6 +33,10 @@ export interface ArticleResponse {
 export interface MultipleArticlesResponse {
     articles: ArticleResponse[];
     articlesCount: number;
+    pageNumber: number;
+    pageSize: number;
+    totalElements: number;
+    totalPages: number;
 }
 
 export interface SingleArticleResponse {
