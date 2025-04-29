@@ -51,7 +51,7 @@ class SecurityConfiguration {
                                 HttpMethod.GET,
                                 "/api/articles/{slug}/comments",
                                 "/api/articles/{slug}",
-                                "/api/articles",
+                                "/api/articles/**",
                                 "/api/profiles/{username}",
                                 "/api/tags")
                         .permitAll()
