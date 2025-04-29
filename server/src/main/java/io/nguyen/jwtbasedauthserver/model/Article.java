@@ -24,13 +24,13 @@ public class Article {
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
 
-    @Column(length = 50, nullable = false, unique = true)
+    @Column(nullable = false, unique = true)
     private String slug;
 
-    @Column(length = 50, nullable = false, unique = true)
+    @Column(nullable = false, unique = true)
     private String title;
 
-    @Column(length = 50, nullable = false)
+    @Column(nullable = false)
     private String description;
 
     @Column(length = 1_000, nullable = false)
