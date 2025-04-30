@@ -23,7 +23,7 @@ class BearerTokenProvider {
         return jwtEncoder.encode(JwtEncoderParameters.from(JwtClaimsSet.builder()
                 .issuer("https://nguyen.io")
                 .issuedAt(now)
-                .expiresAt(now.plusSeconds(300))
+                .expiresAt(now.plusSeconds(604800)) // 7 Days
                 .subject(user.getId().toString())
                 .build()));
     }
