@@ -1,5 +1,6 @@
 import { Link } from "react-router";
-import { TOKEN_KEY, useAuth } from "../contexts/AuthContext";
+import { TOKEN_KEY, useAuth } from "../../contexts/AuthContext";
+import { Button } from "../common/Button";
 
 export const Navbar = () => {
   const { user } = useAuth();
@@ -14,31 +15,28 @@ export const Navbar = () => {
         <div className="flex items-center space-x-4">
           {user ? (
             <>
-              <Link to="/profile" className="text-gray-700 hover:text-blue-600">
+              <Button outline to="/articles">
+                Articles
+              </Button>
+              <Button outline to="/profile">
                 Profile
-              </Link>
-
-              <button
+              </Button>
+              <Button
+                variant="danger"
                 onClick={() => {
                   localStorage.removeItem(TOKEN_KEY);
                   window.location.href = "/login";
                 }}
-                className="text-gray-700 hover:text-red-600"
               >
                 Logout
-              </button>
+              </Button>
             </>
           ) : (
             <>
-              <Link to="/login" className="text-gray-700 hover:text-blue-600">
+              <Button outline to="/login">
                 Login
-              </Link>
-              <Link
-                to="/signup"
-                className="bg-blue-600 text-white py-1 px-3 rounded hover:bg-blue-700"
-              >
-                Sign up
-              </Link>
+              </Button>
+              <Button to="/signup">Sign up</Button>
             </>
           )}
         </div>

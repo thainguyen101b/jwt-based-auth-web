@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { LoginFormData, loginSchema } from "../schemas/auth.schema";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { FormField } from "./FormField";
+import { Button } from "./common/Button";
 
 export const LoginForm = () => {
   const {
@@ -70,13 +71,9 @@ export const LoginForm = () => {
           {...register("password")}
         />
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-75"
-        >
+        <Button disabled={isSubmitting} type="submit" fullWidth>
           {isSubmitting ? "Loading..." : "Login"}
-        </button>
+        </Button>
       </form>
 
       <div className="mt-4 text-center">

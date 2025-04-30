@@ -18,14 +18,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const loadUser = async () => {
-      const token = localStorage.getItem(TOKEN_KEY);
-      if (token) {
-        try {
-          const response = await getUser(token);
-          setUser(response.user);
-        } catch (error) {
-          localStorage.removeItem(TOKEN_KEY);
-        }
+      try {
+        const response = await getUser();
+        setUser(response.user);
+      } catch (error) {
+        localStorage.removeItem(TOKEN_KEY);
       }
       setIsLoading(false);
     };
