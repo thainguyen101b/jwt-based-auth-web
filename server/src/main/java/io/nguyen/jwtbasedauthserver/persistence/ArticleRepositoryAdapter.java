@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -15,6 +16,7 @@ class ArticleRepositoryAdapter implements ArticleRepository {
     private final ArticleJpaRepository articleJpaRepository;
     private final TagJpaRepository tagJpaRepository;
     private final ArticleFavoriteJpaRepository articleFavoriteJpaRepository;
+    private final ArticleCommentJpaRepository articleCommentJpaRepository;
 
     @Override
     public Article save(Article article) {
@@ -22,13 +24,14 @@ class ArticleRepositoryAdapter implements ArticleRepository {
     }
 
     @Override
+    @Transactional
     public Article save(Article article, Collection<Tag> tags) {
         var articleSaved = save(article);
         for (var tag : tagJpaRepository.saveAll(tags)) {
             articleSaved.addTag(new ArticleTag(articleSaved, tag));
         }
 
-        return articleJpaRepository.save(articleSaved);
+        return articleSaved;
     }
 
     @Override
@@ -80,7 +83,9 @@ class ArticleRepositoryAdapter implements ArticleRepository {
     }
 
     @Override
+    @Transactional
     public void delete(Article article) {
+        articleCommentJpaRepository.deleteByArticle(article);
         articleJpaRepository.delete(article);
     }
 

@@ -7,5 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 interface ArticleCommentJpaRepository extends JpaRepository<ArticleComment, Integer> {
-    List<ArticleComment> findByArticle(Article article);
+    List<ArticleComment> findByArticleOrderByCreatedAtDesc(Article article);
+
+    void deleteByArticle(Article article);
 }
