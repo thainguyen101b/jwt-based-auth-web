@@ -27,7 +27,7 @@ export const Button = ({
   const baseClasses =
     `${fullWidth ? "w-full" : "w-auto"} 
     inline-flex justify-center items-center 
-    rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-75`;
+    rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-75 cursor-pointer`;
 
   const sizeClasses = {
     sm: "py-1 px-3 text-sm",

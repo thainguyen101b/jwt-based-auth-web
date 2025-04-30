@@ -14,7 +14,14 @@ import {
 } from "@tanstack/react-table";
 import { deleteArticle, getArticles } from "../../api/article";
 import { Button } from "../../components/common/Button";
-import { EditIcon, EyeIcon, PlusIcon, TrashIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  EditIcon,
+  EyeIcon,
+  FilterIcon,
+  PlusIcon,
+  TrashIcon,
+} from "lucide-react";
 import { ErrorMessage } from "../../components/ErrorMessage";
 import { SearchBar } from "../../components/common/SearchBar";
 import { PageSizeSelector } from "../../components/common/PageSizeSelector";
@@ -22,6 +29,8 @@ import { LoadingRow } from "../../components/common/LoadingRow";
 import { EmptyState } from "../../components/common/EmptyState";
 import { Pagination } from "../../components/common/Pagination";
 import { DeleteModal } from "../../components/common/DeleteModal";
+import { ColumnFilter } from "../../components/common/ColumnFilter";
+import { FilterBadges } from "../../components/common/FilterBadges";
 
 export const ArticlesPage = () => {
   const [articles, setArticles] = useState<ArticleResponse[]>([]);
@@ -32,6 +41,7 @@ export const ArticlesPage = () => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState<string>("");
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
   // Pagination state
   const [pageNumber, setPageNumber] = useState<number>(0);
@@ -117,6 +127,16 @@ export const ArticlesPage = () => {
     setArticleToDelete(null);
   }, []);
 
+  const handleRemoveFilter = useCallback((filterId: string) => {
+    if (filterId === "all") {
+      setColumnFilters([]);
+    } else {
+      setColumnFilters((prev) =>
+        prev.filter((filter) => filter.id !== filterId)
+      );
+    }
+  }, []);
+
   // Column definitions
   const columnHelper = createColumnHelper<ArticleResponse>();
   const columns = useMemo(
@@ -133,6 +153,7 @@ export const ArticlesPage = () => {
             </div>
           </div>
         ),
+        enableColumnFilter: true,
       }),
       columnHelper.accessor("author.username", {
         header: "Author",
@@ -148,6 +169,7 @@ export const ArticlesPage = () => {
             <span>{info.getValue()}</span>
           </div>
         ),
+        enableColumnFilter: true,
       }),
       columnHelper.accessor("tagList", {
         header: "Tags",
@@ -170,18 +192,48 @@ export const ArticlesPage = () => {
             </div>
           );
         },
+        enableColumnFilter: true,
+        filterFn: (row, columnId, filterValue) => {
+          if (!filterValue) return true;
+          const tags = row.getValue(columnId) as string[];
+          return tags.some((tag) =>
+            tag.toLowerCase().includes((filterValue as string).toLowerCase())
+          );
+        },
       }),
       columnHelper.accessor("createdAt", {
         header: "Created At",
         cell: (info) => new Date(info.getValue()).toLocaleDateString("vi-VN"),
+        enableColumnFilter: true,
+        filterFn: (row, columnId, filterValue) => {
+          if (!filterValue) return true;
+          const date = new Date(
+            row.getValue(columnId) as string
+          ).toLocaleDateString("vi-VN");
+          return date.includes(filterValue as string);
+        },
       }),
       columnHelper.accessor("updatedAt", {
         header: "Updated At",
         cell: (info) => new Date(info.getValue()).toLocaleDateString("vi-VN"),
+        enableColumnFilter: true,
+        filterFn: (row, columnId, filterValue) => {
+          if (!filterValue) return true;
+          const date = new Date(
+            row.getValue(columnId) as string
+          ).toLocaleDateString("vi-VN");
+          return date.includes(filterValue as string);
+        },
       }),
       columnHelper.accessor("favoritesCount", {
         header: "Favorites Count",
         cell: (info) => info.getValue(),
+        enableColumnFilter: true,
+        filterFn: (row, columnId, filterValue) => {
+          if (!filterValue) return true;
+          const count = row.getValue(columnId) as number;
+          return count.toString().includes(filterValue as string);
+        },
       }),
       columnHelper.display({
         id: "actions",
@@ -202,6 +254,7 @@ export const ArticlesPage = () => {
             </Button>
           </div>
         ),
+        enableColumnFilter: false,
       }),
     ],
     [openDeleteModal]
@@ -241,16 +294,87 @@ export const ArticlesPage = () => {
           </h1>
           <p className="text-gray-600">Manage all articles in system</p>
         </div>
+
+        <Button to="/create-article">
+          <PlusIcon className="h-5 w-5 mr-1" /> Create new article
+        </Button>
       </div>
 
-      <Button to="/create-article">
-        <PlusIcon className="h-5 w-5 mr-1" /> Create new article
-      </Button>
-
       {/* Search and filter */}
-      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <SearchBar value={globalFilter} onChange={setGlobalFilter} />
-        <PageSizeSelector value={pageSize} onChange={handlePageSizeChange} />
+      <div className="mb-2 bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex-1">
+            <SearchBar value={globalFilter} onChange={setGlobalFilter} />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Button
+                variant="secondary"
+                onClick={() => setActiveFilter(activeFilter ? null : "columns")}
+                type="button"
+              >
+                <FilterIcon size={16} className="mr-1" />
+                Column Filters
+                <ChevronDownIcon size={16} className="ml-1" />
+              </Button>
+              {activeFilter === "columns" && (
+                <div className="absolute z-10 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-2 w-64">
+                  <h3 className="font-medium text-gray-700 px-3 py-2 border-b">
+                    Select a column to filter
+                  </h3>
+                  <div className="max-h-80 overflow-y-auto">
+                    {table
+                      .getAllColumns()
+                      .filter((column) => column.getCanFilter())
+                      .map((column) => (
+                        <button
+                          key={column.id}
+                          onClick={() => setActiveFilter(column.id)}
+                          className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-md flex justify-between items-center cursor-pointer"
+                          type="button"
+                        >
+                          <span>{String(column.columnDef.header)}</span>
+                          {(column.getFilterValue() as string) && (
+                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                              Filtered
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <PageSizeSelector
+              value={pageSize}
+              onChange={handlePageSizeChange}
+            />
+          </div>
+        </div>
+
+        {/* Active Column Filter */}
+        {activeFilter && activeFilter !== "columns" && (
+          <div className="relative mt-2">
+            {(() => {
+              const column = table.getColumn(activeFilter);
+              if (!column) return null;
+
+              return (
+                <ColumnFilter<ArticleResponse>
+                  column={column}
+                  onClose={() => setActiveFilter(null)}
+                />
+              );
+            })()}
+          </div>
+        )}
+
+        {/* Filter Badges */}
+        <FilterBadges<ArticleResponse>
+          columnFilters={columnFilters}
+          columns={table.getAllColumns()}
+          onRemoveFilter={handleRemoveFilter}
+        />
       </div>
 
       {/* Error */}
@@ -267,9 +391,11 @@ export const ArticlesPage = () => {
                     key={header.id}
                     scope="col"
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    onClick={header.column.getToggleSortingHandler()}
                   >
-                    <div className="flex items-center">
+                    <div
+                      className="flex items-center cursor-pointer"
+                      onClick={header.column.getToggleSortingHandler()}
+                    >
                       {flexRender(
                         header.column.columnDef.header,
                         header.getContext()
@@ -279,6 +405,21 @@ export const ArticlesPage = () => {
                         desc: " 🔽",
                       }[header.column.getIsSorted() as string] ?? null}
                     </div>
+                    {header.column.getCanFilter() && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveFilter(header.column.id);
+                        }}
+                        className="mt-1 text-blue-600 hover:text-blue-800 text-xs flex items-center cursor-pointer"
+                        type="button"
+                      >
+                        <FilterIcon size={12} className="mr-1" />
+                        {header.column.getFilterValue()
+                          ? "Edit filter"
+                          : "Add filter"}
+                      </button>
+                    )}
                   </th>
                 ))}
               </tr>

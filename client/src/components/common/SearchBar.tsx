@@ -4,12 +4,17 @@ import { Dispatch, SetStateAction } from "react";
 interface SearchBarProps {
   value: string;
   onChange: Dispatch<SetStateAction<string>>;
+  placeholder?: string;
 }
-export const SearchBar = ({ value, onChange }: SearchBarProps) => {
+export const SearchBar = ({
+  value,
+  onChange,
+  placeholder = "Search in all columns...",
+}: SearchBarProps) => {
   return (
     <div className="relative w-full sm:w-64">
       <input
-        placeholder="Search article"
+        placeholder={placeholder}
         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         type="text"
         value={value}
