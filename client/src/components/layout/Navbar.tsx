@@ -15,9 +15,6 @@ export const Navbar = () => {
         <div className="flex items-center space-x-4">
           {user ? (
             <>
-              <Button outline to="/articles">
-                Articles
-              </Button>
               <Button outline to="/profile">
                 Profile
               </Button>
