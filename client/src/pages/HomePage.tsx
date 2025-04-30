@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
+import { Button } from "../components/common/Button";
 
 export const HomePage = () => {
   const { user, isLoading } = useAuth();
@@ -23,12 +24,9 @@ export const HomePage = () => {
               Welcome back,{" "}
               <span className="font-semibold">{user.username}</span>!
             </p>
-            <Link
-              to="/profile"
-              className="inline-block bg-blue-600 text-white py-2 px-6 rounded-md hover:bg-blue-700"
-            >
+            <Button to="/profile" fullWidth>
               Go to Profile
-            </Link>
+            </Button>
           </div>
         ) : (
           <div className="flex space-x-4">

@@ -20,6 +20,10 @@ public class UserService {
         return userRepository.findById(id).orElseThrow(() -> new NoSuchElementException("user not found"));
     }
 
+    public User getUser(String username) {
+        return userRepository.findByUsername(username).orElseThrow(() -> new NoSuchElementException("user not found"));
+    }
+
     @SuppressWarnings("UnusedReturnValue")
     public User signup(UserRegistry registry) {
         if (userRepository.existsBy(registry.email(), registry.username())) {
